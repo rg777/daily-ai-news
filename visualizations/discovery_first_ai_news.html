@@ -3,119 +3,422 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Daily AI News — Discovery-First Visualization</title>
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <title>AI & Tech In Focus — Daily Visual Brief</title>
   <style>
-    body { font-family: Inter, system-ui, -apple-system, sans-serif; margin: 0; background:#0b1020; color:#e7ecff; }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    h1 { margin: 0 0 6px; }
-    p { color:#b8c4ee; }
-    .kpis { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin:14px 0 18px; }
-    .kpi { background:#151d35; border:1px solid #273560; border-radius:10px; padding:12px; }
-    .kpi b { display:block; font-size:1.3rem; color:#99f6e4; }
-    .chart { background:#151d35; border:1px solid #273560; border-radius:12px; margin-bottom:14px; }
-    .hint { font-size:.92rem; color:#9eb0e8; margin-bottom:10px; }
-    @media (max-width: 900px){ .kpis { grid-template-columns: repeat(2,1fr);} }
+    :root {
+      --bg: #f3f4f8;
+      --ink: #171821;
+      --muted: #7f8296;
+      --indigo: #4c4ce2;
+      --orange: #f05a22;
+      --line: #d4d6e0;
+      --card: #eef0f9;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      padding: 22px;
+    }
+
+    .page {
+      margin: 0 auto;
+      max-width: 1600px;
+      border: 1px solid #e0e2ea;
+      background: #fbfbfe;
+      box-shadow: 0 20px 40px rgba(10, 12, 28, 0.08);
+    }
+
+    .topbar {
+      padding: 28px 28px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.45em;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(40px, 5vw, 68px);
+      line-height: 0.95;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 600;
+    }
+
+    h1 span {
+      color: var(--indigo);
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    .date-wrap {
+      text-align: right;
+      align-self: center;
+      margin-top: 8px;
+    }
+
+    .date-badge {
+      display: inline-block;
+      color: #fff;
+      background: #0c0e1a;
+      padding: 14px 24px;
+      border-radius: 14px;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .edition {
+      margin-top: 12px;
+      font-size: 16px;
+      color: #63667d;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .rule { border-top: 4px solid #202330; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 900px;
+    }
+
+    .panel {
+      padding: 30px 26px 24px;
+      position: relative;
+    }
+
+    .panel + .panel {
+      border-left: 1px solid #d6d8e3;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 38px;
+      bottom: 38px;
+      width: 4px;
+      border-radius: 2px;
+    }
+
+    .panel.left::before { background: var(--indigo); }
+    .panel.right::before { background: var(--orange); }
+
+    .section-head {
+      margin-left: 24px;
+      color: #b0b3c5;
+      font-size: 32px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      border-bottom: 2px solid #e2e3ec;
+      padding-bottom: 6px;
+      letter-spacing: 0.08em;
+    }
+
+    .strap {
+      margin: 24px 0 10px 24px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .left .strap { color: var(--indigo); }
+    .right .strap { color: var(--orange); }
+
+    h2 {
+      margin: 10px 0 16px 24px;
+      font-size: clamp(34px, 2.5vw, 58px);
+      line-height: 1.05;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 500;
+      max-width: 92%;
+    }
+
+    .body {
+      margin-left: 24px;
+      max-width: 94%;
+      font-size: clamp(19px, 1.15vw, 30px);
+      line-height: 1.46;
+      color: #2a2d3f;
+    }
+
+    .note {
+      margin: 20px 0 18px 24px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      font-style: italic;
+      font-size: clamp(19px, 1.1vw, 28px);
+      line-height: 1.4;
+      max-width: 95%;
+      border-left: 4px solid;
+    }
+
+    .left .note {
+      background: #eceffd;
+      border-left-color: var(--indigo);
+      color: #383b4f;
+    }
+
+    .right .note {
+      background: #fff0e6;
+      border-left-color: var(--orange);
+      color: #40322a;
+    }
+
+    .chart-card {
+      margin: 14px 0 0 24px;
+      max-width: 95%;
+      border: 1px solid #d7dbeb;
+      border-radius: 12px;
+      padding: 16px 16px 12px;
+      background: #f8f9ff;
+    }
+
+    .chart-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #5f647b;
+      letter-spacing: 0.03em;
+      font-weight: 600;
+    }
+
+    svg { width: 100%; height: auto; display: block; }
+    .axis { stroke: #d3d7e8; stroke-width: 1; }
+    .series { fill: rgba(76, 76, 226, 0.14); stroke: var(--indigo); stroke-width: 4; }
+    .dot { fill: #fff; stroke: var(--indigo); stroke-width: 3; }
+    .dot-label {
+      fill: var(--indigo);
+      font-size: 12px;
+      font-weight: 700;
+      text-anchor: middle;
+      font-family: Inter, sans-serif;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0 0 24px;
+      max-width: 95%;
+    }
+
+    .kpi {
+      background: var(--card);
+      border: 1px solid #d8dcef;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+
+    .kpi b {
+      display: block;
+      font-family: Georgia, serif;
+      font-size: clamp(34px, 2.2vw, 52px);
+      color: #4246d4;
+      line-height: 1;
+    }
+
+    .kpi span {
+      font-size: clamp(15px, 0.95vw, 20px);
+      color: #71758b;
+    }
+
+    .stack {
+      margin: 16px 0 0 24px;
+      max-width: 95%;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stack-card {
+      border-radius: 12px;
+      border: 2px solid;
+      background: #fff;
+      padding: 12px;
+      min-height: 170px;
+    }
+
+    .stack-card h3 {
+      margin: 0;
+      font-size: 22px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .stack-card p {
+      margin: 6px 0;
+      font-size: 18px;
+      color: #2d3040;
+    }
+
+    .stack-1 { border-color: #e6b985; }
+    .stack-2 { border-color: #c5a3f0; }
+    .stack-3 { border-color: #79d7a7; }
+
+    .source {
+      margin: 12px 0 0 24px;
+      color: #9ea2b5;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      font-style: italic;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 1200px) {
+      .grid { grid-template-columns: 1fr; }
+      .panel + .panel { border-left: 0; border-top: 1px solid #d6d8e3; }
+      .date-wrap { text-align: left; }
+      .date-badge { font-size: 28px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Daily AI News: Discovery-First Lens</h1>
-    <p>Use this view to spot patterns before forming hypotheses. Dataset contains 190 days (Oct 1, 2025 → Apr 8, 2026) across 7 AI news themes.</p>
-    <div class="hint">Tip: drag to zoom, double-click to reset, and click legend items to isolate categories.</div>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Daily Visual Brief</div>
+        <h1>AI &amp; Tech <span>In Focus</span></h1>
+      </div>
+      <div class="date-wrap">
+        <div class="date-badge">05 APR 2026</div>
+        <div class="edition">Sunday · Learning Edition</div>
+      </div>
+    </header>
 
-    <div class="kpis" id="kpis"></div>
+    <div class="rule"></div>
 
-    <div id="trend" class="chart" style="height:430px;"></div>
-    <div id="heatmap" class="chart" style="height:360px;"></div>
-    <div id="scatter" class="chart" style="height:420px;"></div>
+    <main class="grid">
+      <section class="panel left">
+        <div class="section-head">01 · AI Finance</div>
+        <div class="strap">🧠 No software company has ever grown this fast at this scale</div>
+        <h2>$25B Revenue in 39 Months: What Does That Actually Mean?</h2>
+        <p class="body">
+          OpenAI reached annualized revenue velocity in just 39 months, a pace that compresses a decade of software growth into three years.
+          The challenge is efficiency: burn remains elevated while enterprise mix keeps expanding. The next milestone is proving durable operating leverage,
+          not simply topline momentum.
+        </p>
+
+        <div class="note">💡 Mental model: OpenAI may be both the fastest-growing software company and still early in proving sustainable margins.</div>
+
+        <div class="chart-card">
+          <p class="chart-title">Revenue trajectory (annualized)</p>
+          <svg viewBox="0 0 560 230" aria-label="Revenue trajectory chart">
+            <line x1="40" y1="190" x2="530" y2="190" class="axis"></line>
+            <line x1="40" y1="25" x2="40" y2="190" class="axis"></line>
+            <path id="revPath" class="series" d=""></path>
+            <g id="revPoints"></g>
+            <text x="40" y="210" class="dot-label">2023</text>
+            <text x="180" y="210" class="dot-label">2024</text>
+            <text x="320" y="210" class="dot-label">2025</text>
+            <text x="460" y="210" class="dot-label">Feb '26</text>
+          </svg>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi"><b>910M</b><span>Weekly active users</span></div>
+          <div class="kpi"><b>$25B</b><span>Annualized revenue</span></div>
+          <div class="kpi"><b>40%+</b><span>Enterprise contribution</span></div>
+        </div>
+
+        <div class="source">OpenAI · CNBC · The Information · Apr 2026</div>
+      </section>
+
+      <section class="panel right">
+        <div class="section-head">02 · Platform Strategy</div>
+        <div class="strap">🧠 Dependency on a partner is a strategic liability — even at scale</div>
+        <h2>Why Microsoft Is Becoming Its Own OpenAI</h2>
+        <p class="body">
+          Microsoft is broadening first-party model capabilities across speech, voice, and image generation to reduce dependence on a single provider.
+          The playbook mirrors prior platform cycles: control the foundational layer and keep distribution at the product edge.
+        </p>
+
+        <div class="note">💡 Platform law: the company that controls core model infrastructure captures more long-term value.</div>
+
+        <div class="stack">
+          <article class="stack-card stack-1">
+            <h3>MAI-Transcribe-1</h3>
+            <p><strong>Speech → Text</strong></p>
+            <p>25 languages</p>
+            <p>2.5× faster latency</p>
+          </article>
+          <article class="stack-card stack-2">
+            <h3>MAI-Voice-1</h3>
+            <p><strong>Text → Audio</strong></p>
+            <p>~60s synthesis window</p>
+            <p>Seconds of custom voice</p>
+          </article>
+          <article class="stack-card stack-3">
+            <h3>MAI-Image-2</h3>
+            <p><strong>Text → Image</strong></p>
+            <p>Top leaderboard tier</p>
+            <p>2× generation speed</p>
+          </article>
+        </div>
+
+        <div class="source">TechCrunch · VentureBeat · Microsoft AI Blog · Apr 2026</div>
+      </section>
+    </main>
   </div>
 
-<script>
-(async () => {
-  const rows = (await fetch('../data/daily_ai_news_long_running.csv').then(r => r.text()))
-    .trim().split('\n').slice(1)
-    .map(line => {
-      const [date, theme, mention_count, avg_sentiment, discovery_signal] = line.split(',');
-      return { date, theme, mention_count:+mention_count, avg_sentiment:+avg_sentiment, discovery_signal:+discovery_signal, dow:new Date(date).getDay() };
-    });
+  <script>
+    (function renderRevenueLine() {
+      const values = [2, 6, 20, 25];
+      const max = 30;
+      const xStart = 70;
+      const xGap = 140;
+      const baseY = 180;
+      const yHeight = 145;
 
-  const themes = [...new Set(rows.map(r => r.theme))];
+      const points = values.map((v, i) => {
+        const x = xStart + (i * xGap);
+        const y = baseY - (v / max) * yHeight;
+        return { x, y, value: `$${v}B` };
+      });
 
-  // KPI cards
-  const totalMentions = rows.reduce((a,b)=>a+b.mention_count,0);
-  const totalSignal = rows.reduce((a,b)=>a+b.discovery_signal,0);
-  const avgSentiment = rows.reduce((a,b)=>a+b.avg_sentiment,0)/rows.length;
-  const fastestGrowing = themes.map(t => {
-      const s = rows.filter(r=>r.theme===t);
-      const first = s.slice(0, 30).reduce((a,b)=>a+b.mention_count,0);
-      const last = s.slice(-30).reduce((a,b)=>a+b.mention_count,0);
-      return { theme:t, growth: (last-first)/Math.max(first,1) };
-    }).sort((a,b)=>b.growth-a.growth)[0];
+      const areaPath = [
+        `M ${points[0].x} ${baseY}`,
+        ...points.map((p, i) => `${i === 0 ? 'L' : 'L'} ${p.x} ${p.y}`),
+        `L ${points[points.length - 1].x} ${baseY}`,
+        'Z'
+      ].join(' ');
 
-  document.getElementById('kpis').innerHTML = [
-    ['Total mentions', totalMentions.toLocaleString()],
-    ['Discovery signal', totalSignal.toLocaleString()],
-    ['Average sentiment', avgSentiment.toFixed(2)],
-    ['Fastest-growing theme', fastestGrowing.theme]
-  ].map(([k,v]) => `<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join('');
+      document.getElementById('revPath').setAttribute('d', areaPath);
 
-  // Chart 1: long-running trend
-  const trendTraces = themes.map(theme => {
-    const points = rows.filter(r => r.theme === theme);
-    return {
-      x: points.map(p => p.date),
-      y: points.map(p => p.mention_count),
-      mode: 'lines',
-      name: theme,
-      line: { width: 2 }
-    };
-  });
-  Plotly.newPlot('trend', trendTraces, {
-    title: 'Daily mention count by AI news theme (long-running pattern)',
-    paper_bgcolor: '#151d35', plot_bgcolor: '#151d35',
-    font: { color:'#e7ecff' },
-    xaxis: { title:'Date' }, yaxis: { title:'Mentions' },
-    legend: { orientation:'h', y:-0.25 }
-  }, {responsive:true});
+      const group = document.getElementById('revPoints');
+      points.forEach((p) => {
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', p.x);
+        dot.setAttribute('cy', p.y);
+        dot.setAttribute('r', 6);
+        dot.setAttribute('class', 'dot');
 
-  // Chart 2: weekday heatmap to reveal cadence patterns
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const z = themes.map(theme => {
-    const byDow = Array(7).fill(0).map(()=>[]);
-    rows.filter(r=>r.theme===theme).forEach(r => byDow[r.dow].push(r.mention_count));
-    return byDow.map(list => list.length ? list.reduce((a,b)=>a+b,0)/list.length : 0);
-  });
-  Plotly.newPlot('heatmap', [{
-    type:'heatmap',
-    x: dayNames,
-    y: themes,
-    z,
-    colorscale:'Viridis'
-  }], {
-    title:'Average mentions by weekday (cadence discovery)',
-    paper_bgcolor:'#151d35', plot_bgcolor:'#151d35', font:{color:'#e7ecff'}
-  }, {responsive:true});
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', p.x);
+        label.setAttribute('y', p.y - 10);
+        label.setAttribute('class', 'dot-label');
+        label.textContent = p.value;
 
-  // Chart 3: sentiment vs impact scatter
-  const scatterTraces = themes.map(theme => {
-    const points = rows.filter(r => r.theme===theme);
-    return {
-      x: points.map(p => p.avg_sentiment),
-      y: points.map(p => p.discovery_signal),
-      text: points.map(p => p.date),
-      mode:'markers',
-      name:theme,
-      marker:{ size:7, opacity:0.6 }
-    };
-  });
-  Plotly.newPlot('scatter', scatterTraces, {
-    title:'Sentiment vs discovery signal (where outliers emerge)',
-    paper_bgcolor:'#151d35', plot_bgcolor:'#151d35', font:{color:'#e7ecff'},
-    xaxis:{ title:'Average sentiment (-1 to +1)' },
-    yaxis:{ title:'Discovery signal' }
-  }, {responsive:true});
-})();
-</script>
+        group.appendChild(dot);
+        group.appendChild(label);
+      });
+    })();
+  </script>
 </body>
 </html>
