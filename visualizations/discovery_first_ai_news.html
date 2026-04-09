@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily AI News — Discovery-First Visualization</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, sans-serif; margin: 0; background:#0b1020; color:#e7ecff; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { margin: 0 0 6px; }
+    p { color:#b8c4ee; }
+    .kpis { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin:14px 0 18px; }
+    .kpi { background:#151d35; border:1px solid #273560; border-radius:10px; padding:12px; }
+    .kpi b { display:block; font-size:1.3rem; color:#99f6e4; }
+    .chart { background:#151d35; border:1px solid #273560; border-radius:12px; margin-bottom:14px; }
+    .hint { font-size:.92rem; color:#9eb0e8; margin-bottom:10px; }
+    @media (max-width: 900px){ .kpis { grid-template-columns: repeat(2,1fr);} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Daily AI News: Discovery-First Lens</h1>
+    <p>Use this view to spot patterns before forming hypotheses. Dataset contains 190 days (Oct 1, 2025 → Apr 8, 2026) across 7 AI news themes.</p>
+    <div class="hint">Tip: drag to zoom, double-click to reset, and click legend items to isolate categories.</div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div id="trend" class="chart" style="height:430px;"></div>
+    <div id="heatmap" class="chart" style="height:360px;"></div>
+    <div id="scatter" class="chart" style="height:420px;"></div>
+  </div>
+
+<script>
+(async () => {
+  const rows = (await fetch('../data/daily_ai_news_long_running.csv').then(r => r.text()))
+    .trim().split('\n').slice(1)
+    .map(line => {
+      const [date, theme, mention_count, avg_sentiment, discovery_signal] = line.split(',');
+      return { date, theme, mention_count:+mention_count, avg_sentiment:+avg_sentiment, discovery_signal:+discovery_signal, dow:new Date(date).getDay() };
+    });
+
+  const themes = [...new Set(rows.map(r => r.theme))];
+
+  // KPI cards
+  const totalMentions = rows.reduce((a,b)=>a+b.mention_count,0);
+  const totalSignal = rows.reduce((a,b)=>a+b.discovery_signal,0);
+  const avgSentiment = rows.reduce((a,b)=>a+b.avg_sentiment,0)/rows.length;
+  const fastestGrowing = themes.map(t => {
+      const s = rows.filter(r=>r.theme===t);
+      const first = s.slice(0, 30).reduce((a,b)=>a+b.mention_count,0);
+      const last = s.slice(-30).reduce((a,b)=>a+b.mention_count,0);
+      return { theme:t, growth: (last-first)/Math.max(first,1) };
+    }).sort((a,b)=>b.growth-a.growth)[0];
+
+  document.getElementById('kpis').innerHTML = [
+    ['Total mentions', totalMentions.toLocaleString()],
+    ['Discovery signal', totalSignal.toLocaleString()],
+    ['Average sentiment', avgSentiment.toFixed(2)],
+    ['Fastest-growing theme', fastestGrowing.theme]
+  ].map(([k,v]) => `<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  // Chart 1: long-running trend
+  const trendTraces = themes.map(theme => {
+    const points = rows.filter(r => r.theme === theme);
+    return {
+      x: points.map(p => p.date),
+      y: points.map(p => p.mention_count),
+      mode: 'lines',
+      name: theme,
+      line: { width: 2 }
+    };
+  });
+  Plotly.newPlot('trend', trendTraces, {
+    title: 'Daily mention count by AI news theme (long-running pattern)',
+    paper_bgcolor: '#151d35', plot_bgcolor: '#151d35',
+    font: { color:'#e7ecff' },
+    xaxis: { title:'Date' }, yaxis: { title:'Mentions' },
+    legend: { orientation:'h', y:-0.25 }
+  }, {responsive:true});
+
+  // Chart 2: weekday heatmap to reveal cadence patterns
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const z = themes.map(theme => {
+    const byDow = Array(7).fill(0).map(()=>[]);
+    rows.filter(r=>r.theme===theme).forEach(r => byDow[r.dow].push(r.mention_count));
+    return byDow.map(list => list.length ? list.reduce((a,b)=>a+b,0)/list.length : 0);
+  });
+  Plotly.newPlot('heatmap', [{
+    type:'heatmap',
+    x: dayNames,
+    y: themes,
+    z,
+    colorscale:'Viridis'
+  }], {
+    title:'Average mentions by weekday (cadence discovery)',
+    paper_bgcolor:'#151d35', plot_bgcolor:'#151d35', font:{color:'#e7ecff'}
+  }, {responsive:true});
+
+  // Chart 3: sentiment vs impact scatter
+  const scatterTraces = themes.map(theme => {
+    const points = rows.filter(r => r.theme===theme);
+    return {
+      x: points.map(p => p.avg_sentiment),
+      y: points.map(p => p.discovery_signal),
+      text: points.map(p => p.date),
+      mode:'markers',
+      name:theme,
+      marker:{ size:7, opacity:0.6 }
+    };
+  });
+  Plotly.newPlot('scatter', scatterTraces, {
+    title:'Sentiment vs discovery signal (where outliers emerge)',
+    paper_bgcolor:'#151d35', plot_bgcolor:'#151d35', font:{color:'#e7ecff'},
+    xaxis:{ title:'Average sentiment (-1 to +1)' },
+    yaxis:{ title:'Discovery signal' }
+  }, {responsive:true});
+})();
+</script>
+</body>
+</html>
